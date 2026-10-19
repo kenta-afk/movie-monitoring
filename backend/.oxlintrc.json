@@ -1,4 +1,61 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["typescript", "oxc"]
+  "plugins": ["typescript", "oxc"],
+  "rules": {
+    "typescript/no-explicit-any": "error"
+  },
+  "overrides": [
+    {
+      "files": ["src/domain/**/*.{ts,tsx}"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "regex": "(^|/)application(/|$)",
+                "message": "domain must not depend on application."
+              },
+              {
+                "regex": "(^|/)infrastructure(/|$)",
+                "message": "domain must not depend on infrastructure."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/application/**/*.{ts,tsx}"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "regex": "(^|/)infrastructure(/|$)",
+                "message": "application must not depend on infrastructure."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/infrastructure/**/*.{ts,tsx}"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "regex": "(^|/)application(/|$)",
+                "message": "infrastructure must not depend on application."
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
 }
