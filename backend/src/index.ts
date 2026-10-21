@@ -14,5 +14,13 @@ app.openapi(createBookRoute, (c) => {
   return c.json({ id: Date.now().toString() }, 200)
 })
 
+app.doc('/docs', {
+  openapi: '3.0.0',
+  info: {
+    title: 'Movie Monitoring API',
+    version: '1.0.0',
+  },
+})
+
 export default app
 
