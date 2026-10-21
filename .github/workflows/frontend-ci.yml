@@ -1,0 +1,61 @@
+name: Frontend CI
+
+on:
+  push:
+    paths:
+      - 'backend/**'
+      - 'frontend/**'
+      - '.github/workflows/frontend-ci.yml'
+  pull_request:
+    paths:
+      - 'backend/**'
+      - 'frontend/**'
+      - '.github/workflows/frontend-ci.yml'
+
+jobs:
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: bun install --frozen-lockfile
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: bun install --frozen-lockfile
+
+      - name: Start backend
+        working-directory: backend
+        run: bun run dev --local --port 8787 > /tmp/movie-monitoring-backend.log 2>&1 &
+
+      - name: Wait for OpenAPI document
+        run: |
+          for attempt in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:8787/docs > /dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/movie-monitoring-backend.log
+          exit 1
+
+      - name: Regenerate OpenAPI types
+        working-directory: frontend
+        run: bun run generate:api
+
+      - name: Check generated OpenAPI types are committed
+        run: git diff --exit-code -- frontend/src/api/schema.d.ts
+
+      - name: Lint
+        working-directory: frontend
+        run: bun lint
+
+      - name: Test
+        working-directory: frontend
+        run: bun test --pass-with-no-tests
